@@ -1,0 +1,486 @@
+-- تحميل مكتبة Rayfield
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- [ اسمك المعروض في الإشعارات ]
+local MyName = "Marco" 
+
+-- متغيرات منصة المشي على الهواء (المطورة)
+local AirWalkPlatform = nil
+local AirWalkConnection = nil
+local CurrentAirHeight = nil
+
+-- متغيرات نظام الكشف (ESP)
+local ESPEnabled = false
+local ESPConnections = {}
+local ESPDrawings = {}
+
+-- متغيرات المؤثرات البصرية (VFX)
+local FireEffect = nil
+local LightningEffect = nil
+local PurpleGlowEffect = nil
+local OriginalMaterials = {}
+
+-- متغيرات المميزات الإضافية
+local InfiniteJumpConn = nil
+local NoClipEnabled = false
+local NoClipConn = nil
+
+-- تنظيف الكشف
+local function ClearESP()
+    for _, drawingGroup in pairs(ESPDrawings) do
+        if drawingGroup.Line then drawingGroup.Line:Remove() end
+        if drawingGroup.Text then drawingGroup.Text:Remove() end
+        if drawingGroup.Highlight then drawingGroup.Highlight:Destroy() end
+    end
+    ESPDrawings = {}
+    for _, conn in pairs(ESPConnections) do conn:Disconnect() end
+    ESPConnections = {}
+end
+
+-- إنشاء النافذة الرئيسية مع التبويبات الجديدة
+local Window = Rayfield:CreateWindow({
+   Name = "✦ OXYGEN X HUB | EXCLUSIVE ✦",
+   LoadingTitle = "OXYGEN SYSTEM INITIALIZING...",
+   LoadingSubtitle = "Created by Developer Marco",
+   ConfigurationSaving = { Enabled = false },
+   KeySystem = false
+})
+
+local MainTab = Window:CreateTab("الرئيسية ⚡", 4483362458)
+local VFXTab = Window:CreateTab("المؤثرات 🔥", 4483362458)
+local ExtraTab = Window:CreateTab("مميزات إضافية 🚀", 4483362458)
+
+---------------------------------------------------------
+-- [ تبويب المميزات الإضافية الجديد ]
+---------------------------------------------------------
+ExtraTab:CreateSection("مميزات متطورة وخارقة 🛠️")
+
+-- 1. القفز اللانهائي (Infinite Jump)
+ExtraTab:CreateButton({
+   Name = "تفعيل القفز اللانهائي 🦘",
+   Callback = function()
+       if not InfiniteJumpConn then
+           InfiniteJumpConn = game:GetService("UserInputService").JumpRequest:Connect(function()
+               local char = game.Players.LocalPlayer.Character
+               if char and char:FindFirstChildOfClass("Humanoid") then
+                   char:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+               end
+           end)
+           Rayfield:Notify({ Title = "OXYGEN EXTRA", Content = "تم تفعيل القفز اللانهائي يا " .. MyName .. " 🦘", Duration = 3, Image = 4483362458 })
+       end
+   end,
+})
+
+ExtraTab:CreateButton({
+   Name = "إيقاف القفز اللانهائي 🛑",
+   Callback = function()
+       if InfiniteJumpConn then
+           InfiniteJumpConn:Disconnect()
+           InfiniteJumpConn = nil
+           Rayfield:Notify({ Title = "OXYGEN EXTRA", Content = "تم إيقاف القفز اللانهائي!", Duration = 3, Image = 4483362458 })
+       end
+   end,
+})
+
+-- 2. اختراق الجدران (NoClip)
+ExtraTab:CreateButton({
+   Name = "تفعيل اختراق الجدران (NoClip) 🧱",
+   Callback = function()
+       if not NoClipEnabled then
+           NoClipEnabled = true
+           NoClipConn = game:GetService("RunService").Stepped:Connect(function()
+               local char = game.Players.LocalPlayer.Character
+               if char then
+                   for _, part in pairs(char:GetDescendants()) do
+                       if part:IsA("BasePart") then
+                           part.CanCollide = false
+                       end
+                   end
+               end
+           end)
+           Rayfield:Notify({ Title = "OXYGEN EXTRA", Content = "تم تفعيل اختراق الجدران!", Duration = 3, Image = 4483362458 })
+       end
+   end,
+})
+
+ExtraTab:CreateButton({
+   Name = "إيقاف اختراق الجدران 🚫",
+   Callback = function()
+       NoClipEnabled = false
+       if NoClipConn then
+           NoClipConn:Disconnect()
+           NoClipConn = nil
+       end
+       Rayfield:Notify({ Title = "OXYGEN EXTRA", Content = "تم إعادة الاصطدام بالجدران!", Duration = 3, Image = 4483362458 })
+   end,
+})
+
+-- 3. تقليل الجاذبية (Moon Gravity)
+ExtraTab:CreateButton({
+   Name = "جاذبية القمـر 🌙",
+   Callback = function()
+       workspace.Gravity = 30
+       Rayfield:Notify({ Title = "OXYGEN EXTRA", Content = "تم تطبيق جاذبية القمر الخفيفة!", Duration = 3, Image = 4483362458 })
+   end,
+})
+
+ExtraTab:CreateButton({
+   Name = "الجاذبية الطبيعية 🌍",
+   Callback = function()
+       workspace.Gravity = 196.2
+       Rayfield:Notify({ Title = "OXYGEN EXTRA", Content = "تم إرجاع الجاذبية العادية!", Duration = 3, Image = 4483362458 })
+   end,
+})
+
+
+---------------------------------------------------------
+-- [ تبويب المؤثرات البصرية ]
+---------------------------------------------------------
+VFXTab:CreateSection("تأثيرات الشخصية (Visual Effects) ✨")
+
+VFXTab:CreateButton({
+   Name = "تفعيل النار 🔥",
+   Callback = function()
+       local char = game.Players.LocalPlayer.Character
+       if char and char:FindFirstChild("HumanoidRootPart") then
+           if not char.HumanoidRootPart:FindFirstChild("PlayerFire") then
+               FireEffect = Instance.new("Fire")
+               FireEffect.Name = "PlayerFire"
+               FireEffect.Size = 8
+               FireEffect.Heat = 10
+               FireEffect.Parent = char.HumanoidRootPart
+               Rayfield:Notify({ Title = "OXYGEN VFX", Content = "تم اشتعال النار حولك! 🔥", Duration = 3, Image = 4483362458 })
+           end
+       end
+   end,
+})
+
+VFXTab:CreateButton({
+   Name = "إيقاف النار 🧯",
+   Callback = function()
+       local char = game.Players.LocalPlayer.Character
+       if char and char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart:FindFirstChild("PlayerFire") then
+           char.HumanoidRootPart.PlayerFire:Destroy()
+           Rayfield:Notify({ Title = "OXYGEN VFX", Content = "تم إطفاء النار!", Duration = 3, Image = 4483362458 })
+       end
+   end,
+})
+
+VFXTab:CreateButton({
+   Name = "تفعيل البرق ⚡",
+   Callback = function()
+       local char = game.Players.LocalPlayer.Character
+       if char and char:FindFirstChild("HumanoidRootPart") then
+           if not char.HumanoidRootPart:FindFirstChild("PlayerSparkles") then
+               LightningEffect = Instance.new("Sparkles")
+               LightningEffect.Name = "PlayerSparkles"
+               LightningEffect.SparkleColor = Color3.fromRGB(0, 255, 255)
+               LightningEffect.Parent = char.HumanoidRootPart
+               Rayfield:Notify({ Title = "OXYGEN VFX", Content = "تم تفعيل شرارات البرق! ⚡", Duration = 3, Image = 4483362458 })
+           end
+       end
+   end,
+})
+
+VFXTab:CreateButton({
+   Name = "إيقاف البرق 🚫",
+   Callback = function()
+       local char = game.Players.LocalPlayer.Character
+       if char and char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart:FindFirstChild("PlayerSparkles") then
+           char.HumanoidRootPart.PlayerSparkles:Destroy()
+           Rayfield:Notify({ Title = "OXYGEN VFX", Content = "تم إيقاف البرق!", Duration = 3, Image = 4483362458 })
+       end
+   end,
+})
+
+VFXTab:CreateButton({
+   Name = "تفعيل التوهج البنفسجي 💜",
+   Callback = function()
+       local char = game.Players.LocalPlayer.Character
+       if char then
+           if not char:FindFirstChild("PurpleGlow") then
+               PurpleGlowEffect = Instance.new("Highlight")
+               PurpleGlowEffect.Name = "PurpleGlow"
+               PurpleGlowEffect.FillColor = Color3.fromRGB(170, 0, 255)
+               PurpleGlowEffect.FillTransparency = 0.3
+               PurpleGlowEffect.OutlineColor = Color3.fromRGB(255, 255, 255)
+               PurpleGlowEffect.OutlineTransparency = 0
+               PurpleGlowEffect.Parent = char
+               Rayfield:Notify({ Title = "OXYGEN VFX", Content = "تم تفعيل الهالة البنفسجية! 💜", Duration = 3, Image = 4483362458 })
+           end
+       end
+   end,
+})
+
+VFXTab:CreateButton({
+   Name = "إيقاف التوهج البنفسجي 🚫",
+   Callback = function()
+       local char = game.Players.LocalPlayer.Character
+       if char and char:FindFirstChild("PurpleGlow") then
+           char.PurpleGlow:Destroy()
+           Rayfield:Notify({ Title = "OXYGEN VFX", Content = "تم إيقاف الهالة البنفسجية!", Duration = 3, Image = 4483362458 })
+       end
+   end,
+})
+
+VFXTab:CreateButton({
+   Name = "تفعيل الماعي البنفسجي 🔮",
+   Callback = function()
+       local char = game.Players.LocalPlayer.Character
+       if char then
+           for _, part in pairs(char:GetChildren()) do
+               if part:IsA("BasePart") then
+                   OriginalMaterials[part] = { Material = part.Material, Color = part.Color }
+                   part.Material = Enum.Material.ForceField
+                   part.Color = Color3.fromRGB(150, 0, 255)
+               end
+           end
+           Rayfield:Notify({ Title = "OXYGEN VFX", Content = "تم تحويل الجسم للماعي البنفسجي! 🔮", Duration = 3, Image = 4483362458 })
+       end
+   end,
+})
+
+VFXTab:CreateButton({
+   Name = "إرجاع الجسم الطبيعي 🔄",
+   Callback = function()
+       local char = game.Players.LocalPlayer.Character
+       if char then
+           for part, data in pairs(OriginalMaterials) do
+               if part and part.Parent then
+                   part.Material = data.Material
+                   part.Color = data.Color
+               end
+           end
+           OriginalMaterials = {}
+           Rayfield:Notify({ Title = "OXYGEN VFX", Content = "تم إعادة مظهر الجسم الطبيعي!", Duration = 3, Image = 4483362458 })
+       end
+   end,
+})
+
+
+---------------------------------------------------------
+-- [ التبويب الرئيسي والأوامر ]
+---------------------------------------------------------
+
+-- قسم المشي على الهواء (المحدث: ثابت وعند القفز يرتفع)
+MainTab:CreateSection("المشي على الهواء (محدث وثابت) 🔲")
+
+MainTab:CreateButton({
+   Name = "تفعيل المشي الثابت 🔲✨",
+   Callback = function()
+       if not AirWalkPlatform then
+           local char = game.Players.LocalPlayer.Character
+           if char and char:FindFirstChild("HumanoidRootPart") then
+               CurrentAirHeight = char.HumanoidRootPart.Position.Y - 3.2
+           else
+               CurrentAirHeight = workspace.CurrentCamera.CFrame.Position.Y - 5
+           end
+
+           AirWalkPlatform = Instance.new("Part")
+           AirWalkPlatform.Size = Vector3.new(10, 1, 10)
+           AirWalkPlatform.Transparency = 0.4
+           AirWalkPlatform.Material = Enum.Material.Neon
+           AirWalkPlatform.Color = Color3.fromRGB(0, 200, 255)
+           AirWalkPlatform.Anchored = true
+           AirWalkPlatform.Parent = workspace
+
+           AirWalkConnection = game:GetService("RunService").Heartbeat:Connect(function()
+               local char = game.Players.LocalPlayer.Character
+               if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChildOfClass("Humanoid") then
+                   local hum = char:FindFirstChildOfClass("Humanoid")
+                   if hum:GetState() == Enum.HumanoidStateType.Jumping then
+                       CurrentAirHeight = CurrentAirHeight + 3.5
+                       task.wait(0.15)
+                   end
+                   AirWalkPlatform.CFrame = CFrame.new(char.HumanoidRootPart.Position.X, CurrentAirHeight, char.HumanoidRootPart.Position.Z)
+               end
+           end)
+
+           Rayfield:Notify({ Title = "OXYGEN AIRWALK", Content = "تم التفعيل! اقفز لترتفع للأعلى يا " .. MyName, Duration = 4, Image = 4483362458 })
+       end
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "إيقاف المشي الثابت ⏹️",
+   Callback = function()
+       if AirWalkConnection then AirWalkConnection:Disconnect() AirWalkConnection = nil end
+       if AirWalkPlatform then AirWalkPlatform:Destroy() AirWalkPlatform = nil end
+       Rayfield:Notify({ Title = "OXYGEN AIRWALK", Content = "تم إيقاف المنصة!", Duration = 3, Image = 4483362458 })
+   end,
+})
+
+-- قسم كشف اللاعبين
+MainTab:CreateSection("نظام الرؤية والتتبع (ESP) 🔴")
+
+MainTab:CreateButton({
+   Name = "تشغيل كشف اللاعبين 👁️",
+   Callback = function()
+       if ESPEnabled then return end
+       ESPEnabled = true
+       
+       Rayfield:Notify({ Title = "OXYGEN VISION", Content = "تم تفعيل التتبع المتقدم يا " .. MyName .. " 🔴", Duration = 4, Image = 4483362458 })
+
+       local function CreateESP(player)
+           if player == game.Players.LocalPlayer then return end
+           local Line = Drawing.new("Line")
+           Line.Color = Color3.fromRGB(255, 0, 0)
+           Line.Thickness = 1.5
+           Line.Transparency = 1
+           local Text = Drawing.new("Text")
+           Text.Color = Color3.fromRGB(255, 255, 255)
+           Text.Size = 14
+           Text.Center = true
+           Text.Outline = true
+           ESPDrawings[player] = { Line = Line, Text = Text }
+
+           local renderConn
+           renderConn = game:GetService("RunService").RenderStepped:Connect(function()
+               if not ESPEnabled then return end
+               local char = player.Character
+               local myChar = game.Players.LocalPlayer.Character
+               if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Humanoid") and char.Humanoid.Health > 0 and myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                   if not char:FindFirstChild("RedHighlight") then
+                       local hl = Instance.new("Highlight")
+                       hl.Name = "RedHighlight"
+                       hl.FillColor = Color3.fromRGB(255, 0, 0)
+                       hl.Parent = char
+                       ESPDrawings[player].Highlight = hl
+                   end
+                   local rootPos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(char.HumanoidRootPart.Position)
+                   if onScreen then
+                       Line.From = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, 0)
+                       Line.To = Vector2.new(rootPos.X, rootPos.Y)
+                       Line.Visible = true
+                       local dist = math.floor((myChar.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude)
+                       local hp = math.floor(char.Humanoid.Health)
+                       Text.Position = Vector2.new(rootPos.X, rootPos.Y - 35)
+                       Text.Text = string.format("%s | HP: %d | %d Studs", player.Name, hp, dist)
+                       Text.Visible = true
+                   else
+                       Line.Visible = false; Text.Visible = false
+                   end
+               else
+                   Line.Visible = false; Text.Visible = false
+                   if char and char:FindFirstChild("RedHighlight") then char.RedHighlight:Destroy() end
+               end
+           end)
+           table.insert(ESPConnections, renderConn)
+       end
+       for _, p in pairs(game.Players:GetPlayers()) do CreateESP(p) end
+       table.insert(ESPConnections, game.Players.PlayerAdded:Connect(CreateESP))
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "إيقاف كشف اللاعبين 🚫",
+   Callback = function()
+       ESPEnabled = false
+       ClearESP()
+       Rayfield:Notify({ Title = "OXYGEN VISION", Content = "تم تعطيل التتبع!", Duration = 3, Image = 4483362458 })
+   end,
+})
+
+-- قسم الأوامر الخاصة
+MainTab:CreateSection("أوامر السيطرة والتدمير 🔥")
+
+MainTab:CreateButton({
+   Name = "أداة التنقل VOID 🌌",
+   Callback = function()
+       local player = game.Players.LocalPlayer
+       local backpack = player:FindFirstChildOfClass("Backpack")
+       
+       if backpack then
+           if backpack:FindFirstChild("VOID") or (player.Character and player.Character:FindFirstChild("VOID")) then
+               Rayfield:Notify({ Title = "OXYGEN SYSTEM", Content = "أداة VOID موجودة في حقيبتك بالفعل!", Duration = 3, Image = 4483362458 })
+               return
+           end
+           
+           local tool = Instance.new("Tool")
+           tool.Name = "VOID"
+           tool.RequiresHandle = false
+           
+           tool.Activated:Connect(function()
+               local mouse = player:GetMouse()
+               if mouse and mouse.Hit then
+                   local char = player.Character
+                   if char and char:FindFirstChild("HumanoidRootPart") then
+                       char:MoveTo(mouse.Hit.Position)
+                   end
+               end
+           end)
+           
+           tool.Parent = backpack
+           Rayfield:Notify({ Title = "OXYGEN SYSTEM", Content = "تم إضافة أداة VOID إلى حقيبتك! 🌌", Duration = 4, Image = 4483362458 })
+       end
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "سكربت تخريب 👹😂",
+   Callback = function()
+       Rayfield:Notify({ Title = "OXYGEN SYSTEM", Content = "جاري تفعيل سكربت التخريب يا " .. MyName .. " 👹🔥", Duration = 4, Image = 4483362458 })
+       task.spawn(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/VR7ss/OMK/refs/heads/main/VR7-ON-TOP"))() end)
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "اختفاء 🤫👻",
+   Callback = function()
+       Rayfield:Notify({ Title = "OXYGEN SYSTEM", Content = "تم تفعيل نمط الاختفاء يا " .. MyName .. "!", Duration = 4, Image = 4483362458 })
+       task.spawn(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Awesome-Invisible-man-133400"))() end)
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "طيران ✈️",
+   Callback = function()
+       Rayfield:Notify({ Title = "OXYGEN SYSTEM", Content = "تم تفعيل الطيران يا " .. MyName .. " 🚀", Duration = 4, Image = 4483362458 })
+       task.spawn(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/MrLamon/MLamon-Hub/refs/heads/main/Protected_8230641029096510.txt"))() end)
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "ايم بوت خرافي 🎯",
+   Callback = function()
+       Rayfield:Notify({ Title = "OXYGEN AIMBOT", Content = "جاري تفعيل الايم بوت التلقائي...", Duration = 4, Image = 4483362458 })
+       task.spawn(function()
+           loadstring(game:HttpGet("https://raw.githubusercontent.com/Exunys/Aimbot-V3/main/src/Aimbot.lua"))()
+       end)
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "قتل الكل 🤫🚬",
+   Callback = function()
+       Rayfield:Notify({ Title = "OXYGEN SYSTEM", Content = "جاري تنفيذ الهجوم الشامل...", Duration = 4, Image = 4483362458 })
+       task.spawn(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Destroy-Practice-servers-LOL-Tp-to-Greece-89845"))() end)
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "سحب كلشي 🧲",
+   Callback = function()
+       Rayfield:Notify({ Title = "OXYGEN SYSTEM", Content = "جاري تفعيل مجرى السحب...", Duration = 4, Image = 4483362458 })
+       task.spawn(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Natural-Disaster-Survival-Super-Ring-27432"))() end)
+   end,
+})
+
+MainTab:CreateButton({
+   Name = "جلد بالركلة (Dropkick) 🦶",
+   Callback = function()
+       Rayfield:Notify({ Title = "OXYGEN SYSTEM", Content = "جلالايق 😂🔥", Duration = 4, Image = 4483362458 })
+       task.spawn(function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-FE-dropkick-script-202669"))() end)
+   end,
+})
+
+MainTab:CreateSlider({
+   Name = "سرعة المشي (WalkSpeed)",
+   Range = {16, 200},
+   Increment = 1,
+   Suffix = "Speed",
+   CurrentValue = 16,
+   Callback = function(Value)
+       if game.Players.LocalPlayer.Character then game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value end
+   end,
+})
